@@ -51,25 +51,32 @@ export default function AdminDashboard() {
     }
   }
 
-  const getTotalRevenue = () => {
-    return stats.orders
-      .filter(o => o.status === 'completed')
-      .reduce((sum, o) => sum + parseFloat(o.total), 0)
-  }
+const getTotalRevenue = () => {
+  if (!Array.isArray(stats.orders)) return 0
 
-  const getPendingOrders = () => {
-    return stats.orders.filter(o => o.status === 'pending').length
-  }
+  return stats.orders
+    .filter(o => o.status === 'completed')
+    .reduce((sum, o) => sum + Number(o.total), 0)
+}
+
+const getPendingOrders = () => {
+  if (!Array.isArray(stats.orders)) return 0
+  return stats.orders.filter(o => o.status === 'pending').length
+}
+
 
   const getLowStockProducts = () => {
     return stats.products.filter(p => p.stock < 10).length
   }
 
-  const getRecentOrders = () => {
-    return stats.orders
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 5)
-  }
+const getRecentOrders = () => {
+  if (!Array.isArray(stats.orders)) return []
+
+  return [...stats.orders]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5)
+}
+
 
   return (
     <AdminLayout>

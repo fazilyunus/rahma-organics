@@ -2,16 +2,15 @@ const pool = require('../models/db');
 
 exports.getOrders = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
+    const result = await pool.query('SELECT * FROM customer_orders ORDER BY id DESC');
+    console.log('Orders from DB:', result.rows);  // check in Node console
     res.json(result.rows);
   } catch (err) {
     console.error('getOrders error:', err);
-    if (err.code === '42P01') {
-      return res.status(501).json({ message: 'Orders table does not exist. Create an `orders` table to enable this endpoint.' });
-    }
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.createOrder = async (req, res) => {
   const { items, total } = req.body;

@@ -25,9 +25,11 @@ export default function AdminOrders() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
-      setOrders(data)
+      // Ensure orders is always an array
+      setOrders(Array.isArray(data) ? data : data.rows ?? [])
     } catch (err) {
       console.error('Failed to load orders:', err)
+      setOrders([]) // fallback to empty array
     } finally {
       setLoading(false)
     }
@@ -54,9 +56,12 @@ export default function AdminOrders() {
     }
   }
 
-  const filteredOrders = filter === 'all' 
-    ? orders 
-    : orders.filter(o => o.status === filter)
+  // Ensure filteredOrders is always an array
+  const filteredOrders = Array.isArray(orders)
+    ? filter === 'all'
+      ? orders
+      : orders.filter(o => o.status === filter)
+    : []
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -69,9 +74,9 @@ export default function AdminOrders() {
   }
 
   const getTotalRevenue = () => {
-    return orders
+    return filteredOrders
       .filter(o => o.status === 'completed')
-      .reduce((sum, o) => sum + parseFloat(o.total), 0)
+      .reduce((sum, o) => sum + parseFloat(o.total || 0), 0)
   }
 
   return (
@@ -81,17 +86,17 @@ export default function AdminOrders() {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-3xl mb-2">📦</div>
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(orders) ? orders.length : 0}</div>
             <div className="text-gray-600">Total Orders</div>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-3xl mb-2">⏳</div>
-            <div className="text-2xl font-bold">{orders.filter(o => o.status === 'pending').length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(orders) ? orders.filter(o => o.status === 'pending').length : 0}</div>
             <div className="text-gray-600">Pending</div>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-3xl mb-2">✅</div>
-            <div className="text-2xl font-bold">{orders.filter(o => o.status === 'completed').length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(orders) ? orders.filter(o => o.status === 'completed').length : 0}</div>
             <div className="text-gray-600">Completed</div>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
@@ -148,18 +153,14 @@ export default function AdminOrders() {
                 {filteredOrders.map(order => (
                   <tr key={order.id} className="border-t hover:bg-gray-50">
                     <td className="px-6 py-4 font-semibold">#{order.id}</td>
-                    <td className="px-6 py-4">
-                      {order.user_id ? `Customer #${order.user_id}` : 'Guest'}
-                    </td>
+                    <td className="px-6 py-4">{order.customer_name || 'Guest'}</td>
                     <td className="px-6 py-4 font-bold text-gold">KSh {order.total}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded text-sm ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
                       <select
                         value={order.status}
